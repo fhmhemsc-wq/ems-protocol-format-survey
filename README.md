@@ -1,2 +1,2 @@
 # ems-protocol-format-survey
-EMS protocol format preference survey — pairwise comparison tool for qualitative research. Collects provider demographics and head-to-head format choices; exports ranked results as CSV. Built for GitHub Pages deployment.
+This tool supports qualitative research into EMS protocol format preferences among prehospital providers. Respondents view two protocol formats side by side and select which they find more usable, readable, or preferable — repeated across all possible pairs. Choices are tallied using a win-count method to produce a final preference ranking. Designed for zero-cost deployment on GitHub Pages with no backend or database required.

@@ -1,6 +1,6 @@
 # ems-protocol-format-survey
 
-This tool supports qualitative research into EMS protocol format preferences among prehospital providers. Respondents view two protocol formats side by side and select which they find more usable, readable, or preferable — repeated across all possible pairs. Choices are tallied using a win-count method to produce a final preference ranking. Designed for zero-cost deployment on GitHub Pages with no backend or database required.
+This tool supports qualitative research into EMS protocol format preferences among prehospital providers. Respondents view two protocol formats side by side and select which they find more usable, readable, or preferable — repeated across all possible pairs. Choices are tallied using a win-count method to produce a final preference ranking. Responses are submitted automatically to a Google Sheet via Google Apps Script. Designed for zero-cost deployment on GitHub Pages.
 
 ---
 
@@ -10,9 +10,10 @@ This tool supports qualitative research into EMS protocol format preferences amo
 - [Repository Structure](#repository-structure)
 - [Adding or Updating Protocols](#adding-or-updating-protocols)
 - [Protocol File Naming Convention](#protocol-file-naming-convention)
+- [Google Sheets & Apps Script Setup](#google-sheets--apps-script-setup)
 - [Deploying to GitHub Pages](#deploying-to-github-pages)
 - [Sharing the Survey](#sharing-the-survey)
-- [Aggregating Results Across Respondents](#aggregating-results-across-respondents)
+- [Analyzing Results in Google Sheets](#analyzing-results-in-google-sheets)
 - [Ranking Method](#ranking-method)
 - [Researcher Notes](#researcher-notes)
 
@@ -33,7 +34,7 @@ With **N** protocol formats, respondents complete **N × (N − 1) / 2** compari
 
 Pair order is randomized for each respondent to reduce order bias.
 
-Each respondent downloads their own CSV at the end. The researcher aggregates these CSVs to analyze group-level preferences.
+When a respondent submits, their responses are sent automatically to a Google Sheet via Google Apps Script. No action is required from the respondent after submission. The researcher accesses all responses directly in Google Sheets.
 
 ---
 
@@ -117,6 +118,39 @@ Convert all protocol documents to **PNG images** before adding them to this repo
 
 ---
 
+## Google Sheets & Apps Script Setup
+
+This is a one-time setup that connects the survey to your Google Sheet.
+
+### What You Need
+- A Google account
+- The `Code.gs` script (contents provided separately)
+- The deployed Apps Script Web App URL hard-coded into `index.html`
+
+### Steps
+
+1. Go to [sheets.google.com](https://sheets.google.com) → create a new sheet named **EMS Protocol Survey**
+2. Click **Extensions → Apps Script**
+3. In the editor, delete all existing code in `Code.gs` → paste the contents of the provided Apps Script code
+4. Click **Save**
+5. Click **Deploy → New deployment**
+   - Type: **Web app**
+   - Description: EMS Protocol Survey
+   - Execute as: **Me**
+   - Who has access: **Anyone**
+   - Click **Deploy** → authorize when prompted
+6. Copy the Web App URL
+7. Open `index.html` in a text editor → find the line `let APPS_SCRIPT_URL = ''` → paste the URL between the quotes
+8. Save and upload the updated `index.html` to GitHub
+
+**Important:** After any code change to `Code.gs`, always create a **New deployment** rather than updating the existing one, to ensure the latest code is live.
+
+### What Gets Recorded Per Respondent
+
+Each submission writes one row to the Google Sheet containing: Respondent ID, timestamp, all four demographic fields, every pairwise choice and optional comment, and a final rank for each protocol format.
+
+---
+
 ## Deploying to GitHub Pages
 
 ### First-Time Setup
@@ -149,41 +183,37 @@ Share the GitHub Pages URL directly with respondents. No login is required. The 
 
 **Recommended distribution language:**
 
-> This survey is part of a research study on EMS protocol format preferences. It will take approximately 10–15 minutes. You will view pairs of protocol formats and select which you find more usable or readable. At the end, please download your results CSV and email it to [researcher email]. Your responses are anonymous.
+> This survey is part of a research study on EMS protocol format preferences. It will take approximately 10–15 minutes. You will view pairs of protocol formats and select which you find more usable or readable. Your responses are submitted automatically — no download or email is required. Your responses are anonymous.
 
-**Important:** Each respondent must download their own CSV and return it to the researcher. The survey does not transmit data to any server.
+**Note:** Responses are transmitted automatically to a secure Google Sheet when the respondent clicks Submit. No action is required from the respondent after that point.
 
 ---
 
-## Aggregating Results Across Respondents
+## Analyzing Results in Google Sheets
 
-Each respondent's CSV contains:
-- One row per comparison pair, with demographics, protocol names, the chosen format, and an optional comment
-- A summary section at the bottom showing that respondent's final ranking
+All responses are collected automatically in your Google Sheet — one row per respondent. No aggregation of separate files is needed.
 
-### Combining CSVs in Excel or Google Sheets
+### Sheet Structure
 
-1. Collect all returned CSV files into one folder
-2. Open each CSV and copy the **data rows only** (not the summary section at the bottom) into a master spreadsheet
-3. The master sheet will have one row per pair per respondent
+Each row contains: Respondent ID, timestamp (Mountain Time), demographics (4 fields), every pairwise choice and optional comment in individual columns, and a final rank for each protocol format.
 
 ### Calculating Group-Level Rankings
 
-In the master sheet, use a **COUNTIFS** formula to count total wins for each protocol across all respondents:
+Use a **COUNTIF** formula to count total wins for each protocol across all respondents. The chosen protocol name is recorded in each `Pair#_Chosen` column:
 
 ```
-=COUNTIFS(K:K, "Protocol Name Here")
+=COUNTIF(C:ZZ, "Protocol Name Here")
 ```
 
-Where column K is the `WinnerName` column. Run this for each protocol format to get aggregate win counts, then rank by total wins descending.
+Run this for each protocol format to get aggregate win counts, then rank by total wins descending.
 
 ### Analyzing Comments
 
-The `Comment` column contains optional free-text rationale for each choice. These are suitable for qualitative thematic coding alongside the quantitative rankings.
+The `Pair#_Comment` columns contain optional free-text rationale for each choice. These are suitable for qualitative thematic coding alongside the quantitative rankings.
 
 ### Analyzing by Demographic Subgroup
 
-Filter the master sheet by the `CertLevel`, `AgencyType`, or `ResponseType` columns to compare rankings across subgroups (e.g., paramedics vs. EMTs, rural vs. urban agencies).
+Filter or use pivot tables on the `CertificationLevel`, `AgencyType`, or `ResponseType` columns to compare rankings across subgroups — for example, paramedics vs. EMTs, or rural vs. urban agencies.
 
 ---
 

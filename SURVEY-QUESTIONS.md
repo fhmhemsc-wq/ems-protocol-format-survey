@@ -112,17 +112,16 @@ Ten questions collected before comparisons begin. Questions Q1 through Q9 are re
 **Required:** Yes
 
 **Question text:**
-> What best describes your agency's EMS response structure?
+> Which best describes your agency's primary operational model?
 
 **Response options:**
 - Fire-based
-- Private
-- Contract Service
-- Government
-- Third-service (standalone EMS, not fire-based)
+- Private / Contract Service
+- Government / Third-service (standalone EMS, not fire-based)
 - Hospital-based
+- Other
 
-**Note:** Third-service EMS refers to a dedicated government EMS agency that operates independently from the fire department. This is distinct from other government or private models.
+**Note:** Government / Third-service refers to a dedicated government EMS agency that operates independently from the fire department, such as a county or municipal EMS department. Private / Contract Service covers both for-profit and non-profit agencies operating under contract.
 
 ---
 

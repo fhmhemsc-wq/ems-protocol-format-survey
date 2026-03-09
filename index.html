@@ -636,10 +636,20 @@ function startComparisons(){
 
   respondentId='R'+Date.now().toString(36).toUpperCase();
 
-  // Build pairs with randomized left/right
-  pairs=HARDCODED_PAIRS.map(([a,b])=>{
+  // Shuffle pair order, then randomize left/right within each pair
+  const shuffled=[...HARDCODED_PAIRS].sort(()=>Math.random()-0.5);
+  pairs=shuffled.map(([a,b])=>{
     const flip=Math.random()<0.5;
-    return{left:flip?b:a,right:flip?a:b,chosen:null,comment:''};
+    // Store canonical key (always alphabetically first format as formatKey_A)
+    // so H2H column name is deterministic regardless of display order
+    return{
+      left:flip?b:a,
+      right:flip?a:b,
+      canonical_a:a,  // always the "first" format in HARDCODED_PAIRS order
+      canonical_b:b,
+      chosen:null,
+      comment:''
+    };
   });
 
   currentIdx=0;
@@ -779,19 +789,36 @@ function submitSurvey(){
   const w=window.innerWidth;
   const deviceType=w<768?'mobile':w<1024?'tablet':'desktop';
 
-  // Pair data
-  const pairData=pairs.map((p,i)=>({
-    pairNumber:i+1,
-    formatA:PROTOCOLS[p.left].label,
-    formatB:PROTOCOLS[p.right].label,
-    formatA_key:p.left,
-    formatB_key:p.right,
-    chosen:p.chosen==='left'?PROTOCOLS[p.left].label:p.chosen==='right'?PROTOCOLS[p.right].label:'No choice',
-    chosen_key:p.chosen==='left'?p.left:p.chosen==='right'?p.right:'',
-    comment:p.comment||''
-  }));
+  // Pair data — include display order and canonical H2H key
+  const pairData=pairs.map((p,i)=>{
+    const chosenKey=p.chosen==='left'?p.left:p.chosen==='right'?p.right:'';
+    const chosenLabel=p.chosen==='left'?PROTOCOLS[p.left].label:p.chosen==='right'?PROTOCOLS[p.right].label:'No choice';
+    // H2H column name built from canonical pair order — deterministic across all respondents
+    const h2h_key='H2H_'+p.canonical_a.replace(/[^a-zA-Z0-9]/g,'_')+'_vs_'+p.canonical_b.replace(/[^a-zA-Z0-9]/g,'_');
+    return{
+      displayOrder:i+1,            // what position this pair appeared for THIS respondent
+      h2h_key,                     // deterministic column name for cross-respondent analysis
+      formatA:PROTOCOLS[p.left].label,
+      formatB:PROTOCOLS[p.right].label,
+      formatA_key:p.left,
+      formatB_key:p.right,
+      canonical_a:p.canonical_a,
+      canonical_b:p.canonical_b,
+      chosen:chosenLabel,
+      chosen_key:chosenKey,
+      comment:p.comment||''
+    };
+  });
 
-  // Final ranks
+  // H2H flat fields — one per matchup, named deterministically
+  const h2hFields={};
+  pairData.forEach(p=>{
+    h2hFields[p.h2h_key]=p.chosen_key?PROTOCOLS[p.chosen_key].label:'';
+    h2hFields[p.h2h_key+'_DisplayOrder']=p.displayOrder;
+    h2hFields[p.h2h_key+'_Comment']=p.comment||'';
+  });
+
+  // Final win-count ranks
   const finalRanks={};
   rankings.forEach((r,i)=>{finalRanks['rank_'+r.label.replace(/[^a-zA-Z0-9]/g,'_')]=i+1;});
 
@@ -803,7 +830,7 @@ function submitSurvey(){
     ...demographics,
     closing_comments:document.getElementById('closing_comments').value||'',
     totalPairs:pairs.length,
-    pairs:JSON.stringify(pairData),
+    ...h2hFields,
     ...finalRanks
   };
 
@@ -822,11 +849,13 @@ function buildRankingDisplay(rankings){
   const maxP=Object.keys(PROTOCOLS).length-1;
   document.getElementById('rankingList').innerHTML=rankings.map((r,rank)=>{
     const medal=rank===0?'🥇':rank===1?'🥈':rank===2?'🥉':`#${rank+1}`;
-    return`<div class="rank-item" style="animation-delay:${(rank+1)*0.1}s">
+    const page1=PROTOCOLS[r.key].pages[0];
+    return`<div class="rank-item" style="animation-delay:${(rank+1)*0.1}s;cursor:pointer;" onclick="openLightbox('${page1}')" title="Tap to view this format">
       <div class="rank-number">${medal}</div>
       <div class="rank-info">
         <div class="rank-name">${r.label}</div>
         <div class="rank-score">${r.wins} win${r.wins!==1?'s':''} of ${maxP} comparisons</div>
+        <div style="font-size:10px;color:var(--accent);margin-top:3px;font-family:'IBM Plex Mono',monospace;">tap to view ↗</div>
       </div>
       <div class="rank-bar-wrap"><div class="rank-bar" style="width:${r.pct}%"></div></div>
     </div>`;

@@ -205,7 +205,7 @@ textarea.form-control{resize:vertical;min-height:90px;line-height:1.5;}
   <div class="container">
     <div class="card instruction-card">
       <h2>EMS Protocol<br><strong>Format Survey</strong></h2>
-      <p class="subtitle">Pairwise comparison research — Grand County EMS / Foothills RETAC</p>
+      <p class="subtitle">Pairwise comparison research — UCHealth / Foothills and Mile-High RETAC Regional Medical Direction Program</p>
       <div class="instruction-box">
         <strong>Before you begin, please note:</strong><br><br>
         You will be comparing six different protocol or guideline formats, all covering the same clinical topic — <strong>allergic reaction and anaphylaxis</strong>. Each format is shown as a static image.<br><br>
@@ -325,52 +325,49 @@ textarea.form-control{resize:vertical;min-height:90px;line-height:1.5;}
       <div class="form-group">
         <span class="q-number">Q8</span>
         <label class="form-label">How do you primarily use your agency's protocols or guidelines?</label>
-        <span class="form-sublabel">Rank your top 3 from the list below — select 1st, 2nd, and 3rd from the dropdowns. Each rank can only be used once.</span>
-        <div id="rankOptions">
-          <div class="rank-option-row" data-code="prep">
-            <label>As preparation before a shift or call type (to review treatment; deeper clinical knowledge sought elsewhere)</label>
-            <select class="form-control rank-select rank-dd" data-code="prep" onchange="validateRanks()">
-              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+        <span class="form-sublabel">Select your top three uses in order of priority. Each option can only be selected once.</span>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <div>
+            <label class="form-sublabel" style="margin-bottom:4px;">1st — Primary use</label>
+            <select class="form-control" id="use_rank1" onchange="updateRankDropdowns()">
+              <option value="">Select your most common use…</option>
+              <option value="prep">Preparation before a shift or call type</option>
+              <option value="reference">Quick reference during or after a call</option>
+              <option value="checklist">Checklist during patient care</option>
+              <option value="scope">Scope of practice reference</option>
+              <option value="learning">Comprehensive learning or teaching document</option>
+              <option value="documentation">Documentation reference (to support PCR)</option>
+              <option value="precepting">Teaching tool when training or precepting others</option>
             </select>
           </div>
-          <div class="rank-option-row" data-code="reference">
-            <label>As a quick reference during or after a call (to confirm dosing, criteria, or specific steps)</label>
-            <select class="form-control rank-select rank-dd" data-code="reference" onchange="validateRanks()">
-              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+          <div>
+            <label class="form-sublabel" style="margin-bottom:4px;">2nd — Secondary use</label>
+            <select class="form-control" id="use_rank2" onchange="updateRankDropdowns()">
+              <option value="">Select your second most common use…</option>
+              <option value="prep">Preparation before a shift or call type</option>
+              <option value="reference">Quick reference during or after a call</option>
+              <option value="checklist">Checklist during patient care</option>
+              <option value="scope">Scope of practice reference</option>
+              <option value="learning">Comprehensive learning or teaching document</option>
+              <option value="documentation">Documentation reference (to support PCR)</option>
+              <option value="precepting">Teaching tool when training or precepting others</option>
             </select>
           </div>
-          <div class="rank-option-row" data-code="checklist">
-            <label>As a checklist during patient care (to ensure all required steps are completed)</label>
-            <select class="form-control rank-select rank-dd" data-code="checklist" onchange="validateRanks()">
-              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
-            </select>
-          </div>
-          <div class="rank-option-row" data-code="scope">
-            <label>As a scope of practice reference (to confirm what you are authorized to do)</label>
-            <select class="form-control rank-select rank-dd" data-code="scope" onchange="validateRanks()">
-              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
-            </select>
-          </div>
-          <div class="rank-option-row" data-code="learning">
-            <label>As a comprehensive learning or teaching document (primary source of clinical knowledge, like a textbook)</label>
-            <select class="form-control rank-select rank-dd" data-code="learning" onchange="validateRanks()">
-              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
-            </select>
-          </div>
-          <div class="rank-option-row" data-code="documentation">
-            <label>As a documentation reference (to support or justify PCR documentation)</label>
-            <select class="form-control rank-select rank-dd" data-code="documentation" onchange="validateRanks()">
-              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
-            </select>
-          </div>
-          <div class="rank-option-row" data-code="precepting">
-            <label>As a teaching tool when training or precepting others</label>
-            <select class="form-control rank-select rank-dd" data-code="precepting" onchange="validateRanks()">
-              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+          <div>
+            <label class="form-sublabel" style="margin-bottom:4px;">3rd — Third use</label>
+            <select class="form-control" id="use_rank3" onchange="updateRankDropdowns()">
+              <option value="">Select your third most common use…</option>
+              <option value="prep">Preparation before a shift or call type</option>
+              <option value="reference">Quick reference during or after a call</option>
+              <option value="checklist">Checklist during patient care</option>
+              <option value="scope">Scope of practice reference</option>
+              <option value="learning">Comprehensive learning or teaching document</option>
+              <option value="documentation">Documentation reference (to support PCR)</option>
+              <option value="precepting">Teaching tool when training or precepting others</option>
             </select>
           </div>
         </div>
-        <div id="rankError" style="display:none;color:var(--red);font-size:12px;margin-top:8px;">Each rank (1st, 2nd, 3rd) can only be selected once.</div>
+        <div id="rankError" style="display:none;color:var(--red);font-size:12px;margin-top:8px;">Each use can only be selected once — please choose a different option.</div>
       </div>
 
       <!-- Q9 -->
@@ -582,30 +579,45 @@ function showScreen(id){
 // ════════════════════════════════════════════
 // RANK VALIDATION (Q8)
 // ════════════════════════════════════════════
+function updateRankDropdowns(){
+  // Get current selections
+  const v1=document.getElementById('use_rank1').value;
+  const v2=document.getElementById('use_rank2').value;
+  const v3=document.getElementById('use_rank3').value;
+  // Disable options already chosen in sibling dropdowns
+  ['use_rank1','use_rank2','use_rank3'].forEach(id=>{
+    const sel=document.getElementById(id);
+    const others=[v1,v2,v3].filter(v=>v&&v!==sel.value);
+    Array.from(sel.options).forEach(opt=>{
+      opt.disabled=others.includes(opt.value);
+    });
+  });
+  // Show error if duplicates somehow exist
+  const vals=[v1,v2,v3].filter(Boolean);
+  const unique=new Set(vals);
+  document.getElementById('rankError').style.display=(vals.length!==unique.size)?'block':'none';
+}
+
 function validateRanks(){
-  const dds=document.querySelectorAll('.rank-dd');
-  const chosen=[];
-  let valid=true;
-  dds.forEach(dd=>{if(dd.value)chosen.push(dd.value);});
-  const unique=new Set(chosen);
-  if(chosen.length!==unique.size){
+  const v1=document.getElementById('use_rank1').value;
+  const v2=document.getElementById('use_rank2').value;
+  const v3=document.getElementById('use_rank3').value;
+  const vals=[v1,v2,v3].filter(Boolean);
+  const unique=new Set(vals);
+  if(vals.length!==unique.size){
     document.getElementById('rankError').style.display='block';
-    valid=false;
-  }else{
-    document.getElementById('rankError').style.display='none';
+    return false;
   }
-  return valid;
+  document.getElementById('rankError').style.display='none';
+  return true;
 }
 
 function getRankData(){
-  const map={};
-  document.querySelectorAll('.rank-dd').forEach(dd=>{
-    if(dd.value) map[dd.dataset.code]=dd.value;
-  });
-  const r1=Object.keys(map).find(k=>map[k]==='1st')||'';
-  const r2=Object.keys(map).find(k=>map[k]==='2nd')||'';
-  const r3=Object.keys(map).find(k=>map[k]==='3rd')||'';
-  return{use_rank1:r1,use_rank2:r2,use_rank3:r3};
+  return{
+    use_rank1:document.getElementById('use_rank1').value||'',
+    use_rank2:document.getElementById('use_rank2').value||'',
+    use_rank3:document.getElementById('use_rank3').value||''
+  };
 }
 
 // ════════════════════════════════════════════

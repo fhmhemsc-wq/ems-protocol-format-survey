@@ -1,1 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMS Protocol Format Survey</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
 
+:root {
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2330;--border:#2a3044;
+  --accent:#00c9a7;--accent2:#3b82f6;--warn:#f59e0b;--text:#e4e8f0;
+  --muted:#6b7a99;--red:#ef4444;--green:#22c55e;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.header-brand{display:flex;align-items:center;gap:10px;}
+.logo{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;color:#000;flex-shrink:0;}
+.header-brand h1{font-size:14px;font-weight:600;letter-spacing:.02em;}
+.header-brand span{font-size:10px;color:var(--muted);display:block;font-family:'IBM Plex Mono',monospace;}
+.progress-header{display:flex;align-items:center;gap:10px;}
+.progress-bar-wrap{width:120px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+@media(max-width:480px){.progress-bar-wrap{width:70px;}}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s ease;}
+.pair-counter{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;}
+
+/* SCREENS */
+.screen{display:none;}.screen.active{display:block;}
+.container{max-width:800px;margin:0 auto;padding:32px 20px;}
+.container-wide{max-width:1300px;margin:0 auto;padding:24px 16px;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:36px;}
+@media(max-width:600px){.card{padding:24px 18px;border-radius:10px;}}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .15s;text-align:center;}
+.btn-primary{background:var(--accent);color:#000;}.btn-primary:hover{background:#00e6be;}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}.btn-ghost:hover{color:var(--text);border-color:var(--text);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-lg{padding:13px 28px;font-size:15px;}
+.btn-full{width:100%;}
+@media(max-width:600px){.btn-lg{padding:13px 20px;font-size:14px;}}
+
+/* FORMS */
+.form-group{margin-bottom:22px;}
+.form-label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;line-height:1.4;}
+.form-sublabel{font-size:12px;color:var(--muted);margin-bottom:8px;display:block;}
+.form-control{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;transition:border-color .15s;}
+.form-control:focus{outline:none;border-color:var(--accent);}
+select.form-control option{background:var(--surface2);}
+textarea.form-control{resize:vertical;min-height:90px;line-height:1.5;}
+.q-number{display:inline-block;background:rgba(0,201,167,.12);color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;margin-bottom:8px;}
+
+/* RANK SELECTS */
+.rank-option-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.rank-option-row label{flex:1;font-size:13px;color:var(--text);line-height:1.4;}
+.rank-select{width:90px;flex-shrink:0;}
+@media(max-width:480px){.rank-option-row{flex-direction:column;align-items:flex-start;gap:4px;}.rank-select{width:100%;}}
+
+/* INSTRUCTION SCREEN */
+.instruction-card h2{font-size:24px;font-weight:300;margin-bottom:6px;}
+.instruction-card h2 strong{color:var(--accent);font-weight:600;}
+.instruction-card .subtitle{color:var(--muted);font-size:14px;margin-bottom:28px;}
+.instruction-box{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:8px;padding:18px 20px;font-size:14px;color:var(--text);line-height:1.7;margin-bottom:24px;}
+
+/* COMPARISON LAYOUT */
+.compare-instruction{font-size:13px;color:var(--muted);margin-bottom:16px;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+
+/* Desktop side-by-side */
+.comparison-grid{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;align-items:start;margin-bottom:20px;}
+.vs-divider{display:flex;align-items:flex-start;justify-content:center;padding-top:56px;}
+.vs-circle{width:44px;height:44px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;color:var(--muted);}
+
+/* Mobile stacked */
+@media(max-width:768px){
+  .comparison-grid{grid-template-columns:1fr;gap:16px;}
+  .vs-divider{display:none;}
+  .mobile-vs{display:flex;align-items:center;justify-content:center;margin:4px 0;}
+  .mobile-vs-inner{background:var(--surface2);border:2px solid var(--border);border-radius:20px;padding:4px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);font-weight:600;}
+}
+@media(min-width:769px){.mobile-vs{display:none;}}
+
+/* Protocol panels */
+.protocol-panel{background:var(--surface);border:2px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
+.protocol-panel.selected{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,201,167,.15);}
+.panel-label{background:var(--surface2);padding:10px 14px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.panel-label-left{display:flex;align-items:center;gap:8px;}
+.proto-letter{background:var(--border);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;flex-shrink:0;}
+.protocol-panel.selected .proto-letter{background:var(--accent);color:#000;}
+.selected-badge{display:none;background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;}
+.protocol-panel.selected .selected-badge{display:inline-block;}
+
+/* Image viewer */
+.panel-viewer{padding:10px;overflow-y:auto;background:var(--bg);}
+/* Desktop: fixed height scroll */
+@media(min-width:769px){.panel-viewer{max-height:620px;}}
+/* Mobile: natural height, no scroll trap */
+@media(max-width:768px){.panel-viewer{max-height:none;overflow-y:visible;}}
+.panel-viewer img{width:100%;border-radius:4px;display:block;margin-bottom:6px;cursor:zoom-in;transition:opacity .15s;}
+.panel-viewer img:hover{opacity:.92;}
+.page-indicator{text-align:center;font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;padding:6px 0 4px;}
+
+/* Choose button */
+.choose-btn{width:100%;padding:13px;border-radius:0 0 10px 10px;font-size:13px;font-weight:600;text-align:center;cursor:pointer;border:none;background:var(--surface2);color:var(--muted);font-family:'IBM Plex Sans',sans-serif;transition:all .15s;}
+.choose-btn:hover{background:var(--accent);color:#000;}
+.choose-btn.chosen{background:var(--accent);color:#000;}
+@media(max-width:768px){.choose-btn{padding:15px;font-size:14px;}}
+
+/* Comment */
+.comment-section{margin-bottom:20px;}
+.comment-section label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500;}
+
+/* Nav */
+.nav-row{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+@media(max-width:480px){.nav-row{flex-direction:column-reverse;}.nav-row .btn{width:100%;}}
+
+/* LIGHTBOX */
+.lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.lightbox.active{display:flex;}
+.lightbox-inner{position:relative;max-width:95vw;max-height:95vh;overflow:auto;border-radius:8px;}
+.lightbox-inner img{display:block;max-width:100%;border-radius:8px;}
+.lightbox-close{position:fixed;top:16px;right:20px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:28px;cursor:pointer;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.lightbox-close:hover{background:rgba(255,255,255,.3);}
+.lightbox-hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:rgba(255,255,255,.5);font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+.zoom-controls{position:fixed;bottom:48px;left:50%;transform:translateX(-50%);display:flex;gap:8px;}
+.zoom-btn{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.zoom-btn:hover{background:rgba(255,255,255,.3);}
+
+/* LOADING */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(15,17,23,.88);z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+.loading-overlay.active{display:flex;}
+.spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* THANK YOU */
+.thankyou-card{text-align:center;}
+.thankyou-icon{font-size:52px;margin-bottom:18px;}
+.thankyou-card h2{font-size:26px;font-weight:300;margin-bottom:8px;}
+.thankyou-card h2 strong{color:var(--accent);font-weight:600;}
+.thankyou-card p{color:var(--muted);font-size:14px;line-height:1.7;margin-bottom:6px;}
+.submit-status{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 20px;border-radius:8px;font-size:13px;font-family:'IBM Plex Mono',monospace;margin:18px 0;}
+.submit-status.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green);}
+.submit-status.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);}
+.submit-status.sending{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:var(--accent2);}
+.ranking-toggle{margin-top:24px;padding-top:24px;border-top:1px solid var(--border);}
+.ranking-list{display:flex;flex-direction:column;gap:8px;margin-top:16px;text-align:left;}
+.rank-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;animation:slideIn .4s ease both;}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.rank-item:nth-child(1){border-color:#f59e0b;}.rank-item:nth-child(2){border-color:#9ca3af;}.rank-item:nth-child(3){border-color:#92400e;}
+.rank-number{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;min-width:28px;text-align:center;}
+.rank-item:nth-child(1) .rank-number{color:#f59e0b;}.rank-item:nth-child(2) .rank-number{color:#9ca3af;}.rank-item:nth-child(3) .rank-number{color:#b45309;}
+.rank-info{flex:1;}.rank-name{font-weight:600;font-size:14px;}.rank-score{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:2px;}
+.rank-bar-wrap{width:100px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.rank-bar{height:100%;background:var(--accent);border-radius:2px;transition:width 1s ease;}
+@media(max-width:480px){.rank-bar-wrap{display:none;}}
+
+/* SECTION DIVIDER */
+.section-div{border:none;border-top:1px solid var(--border);margin:28px 0;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div style="color:var(--muted);font-size:13px;" id="loadingMsg">Loading…</div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <div class="lightbox-inner" id="lightboxInner">
+    <img id="lightboxImg" src="" alt="Protocol image enlarged" style="transform-origin:center center;">
+  </div>
+  <div class="zoom-controls">
+    <button class="zoom-btn" onclick="event.stopPropagation();adjustZoom(-0.25)">−</button>
+    <button class="zoom-btn" onclick="event.stopPropagation();adjustZoom(0.25)">+</button>
+  </div>
+  <div class="lightbox-hint">Click outside or press ESC to close · +/− to zoom</div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-brand">
+    <div class="logo">EMS</div>
+    <div>
+      <h1>Protocol Format Survey</h1>
+      <span>Pairwise Comparison Research</span>
+    </div>
+  </div>
+  <div class="progress-header" id="progressHeader" style="display:none;">
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="pair-counter" id="pairCounter"></div>
+  </div>
+</header>
+
+<!-- ══════════ SCREEN: INSTRUCTIONS ══════════ -->
+<div class="screen active" id="screenInstructions">
+  <div class="container">
+    <div class="card instruction-card">
+      <h2>EMS Protocol<br><strong>Format Survey</strong></h2>
+      <p class="subtitle">Pairwise comparison research — Grand County EMS / Foothills RETAC</p>
+      <div class="instruction-box">
+        <strong>Before you begin, please note:</strong><br><br>
+        You will be comparing six different protocol or guideline formats, all covering the same clinical topic — <strong>allergic reaction and anaphylaxis</strong>. Each format is shown as a static image.<br><br>
+        One format uses hyperlinks to access medication dosing information — those links are not functional in this survey. A note will appear when that format is displayed to explain how dosing is normally accessed.<br><br>
+        You may <strong>tap or click any image</strong> to enlarge it for closer review. Use the + / − controls or pinch to zoom.
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:24px;">This survey takes approximately 15–20 minutes. Your responses are anonymous and will be submitted automatically.</p>
+      <button class="btn btn-primary btn-lg btn-full" onclick="showScreen('screenDemo')">Begin Survey →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: DEMOGRAPHICS ══════════ -->
+<div class="screen" id="screenDemo">
+  <div class="container">
+    <div class="card">
+      <h2 style="font-size:20px;font-weight:500;margin-bottom:4px;">About You</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:28px;">Please complete all questions before the comparisons begin. Your responses are anonymous.</p>
+
+      <!-- Q1 -->
+      <div class="form-group">
+        <span class="q-number">Q1</span>
+        <label class="form-label">How many total years have you worked or volunteered in EMS?</label>
+        <select class="form-control" id="q_exp_years">
+          <option value="">Select…</option>
+          <option>Less than 1 year</option>
+          <option>1–2 years</option>
+          <option>3–4 years</option>
+          <option>5–7 years</option>
+          <option>8–10 years</option>
+          <option>11–15 years</option>
+          <option>16–20 years</option>
+          <option>21 or more years</option>
+        </select>
+      </div>
+
+      <!-- Q2 -->
+      <div class="form-group">
+        <span class="q-number">Q2</span>
+        <label class="form-label">What is your current EMS certification level?</label>
+        <select class="form-control" id="q_cert_level">
+          <option value="">Select…</option>
+          <option>EMT</option>
+          <option>AEMT</option>
+          <option>Paramedic</option>
+          <option>Other</option>
+          <option>Non-clinical (e.g., administrator, coordinator, educator)</option>
+        </select>
+      </div>
+
+      <!-- Q3 -->
+      <div class="form-group">
+        <span class="q-number">Q3</span>
+        <label class="form-label">What best describes your primary role in EMS?</label>
+        <select class="form-control" id="q_primary_role">
+          <option value="">Select…</option>
+          <option>Provider</option>
+          <option>Supervisor</option>
+          <option>Officer</option>
+          <option>Medical Director / Physician</option>
+          <option>Educator / Training Officer</option>
+          <option>Administrator / Coordinator</option>
+        </select>
+      </div>
+
+      <!-- Q4 -->
+      <div class="form-group">
+        <span class="q-number">Q4</span>
+        <label class="form-label">Select the option that best describes the highest population density area your agency serves.</label>
+        <select class="form-control" id="q_agency_type">
+          <option value="">Select…</option>
+          <option>Rural / Frontier (low population density, longer transport times)</option>
+          <option>Urban / Suburban (cities and surrounding communities)</option>
+        </select>
+      </div>
+
+      <!-- Q5 -->
+      <div class="form-group">
+        <span class="q-number">Q5</span>
+        <label class="form-label">What best describes your agency's EMS response structure?</label>
+        <select class="form-control" id="q_response_type">
+          <option value="">Select…</option>
+          <option>Fire-based</option>
+          <option>Private</option>
+          <option>Contract Service</option>
+          <option>Government</option>
+          <option>Third-service (standalone EMS, not fire-based)</option>
+          <option>Hospital-based</option>
+        </select>
+      </div>
+
+      <!-- Q6 -->
+      <div class="form-group">
+        <span class="q-number">Q6</span>
+        <label class="form-label">What best describes your employment status? If you work for multiple agencies, answer for the agency where you work the most hours.</label>
+        <select class="form-control" id="q_pay_status">
+          <option value="">Select…</option>
+          <option>Paid (career / full-time)</option>
+          <option>Paid (part-time)</option>
+          <option>Volunteer</option>
+        </select>
+      </div>
+
+      <!-- Q7 -->
+      <div class="form-group">
+        <span class="q-number">Q7</span>
+        <label class="form-label">Approximately how many EMS calls does your agency respond to per day on average?</label>
+        <select class="form-control" id="q_call_volume">
+          <option value="">Select…</option>
+          <option>Less than 1 call per day (fewer than ~150 calls per year)</option>
+          <option>1–2 calls per day (roughly 150–600 calls per year)</option>
+          <option>2–7 calls per day (roughly 600–2,500 calls per year)</option>
+          <option>More than 7 calls per day (more than ~2,500 calls per year)</option>
+        </select>
+      </div>
+
+      <!-- Q8 -->
+      <div class="form-group">
+        <span class="q-number">Q8</span>
+        <label class="form-label">How do you primarily use your agency's protocols or guidelines?</label>
+        <span class="form-sublabel">Rank your top 3 from the list below — select 1st, 2nd, and 3rd from the dropdowns. Each rank can only be used once.</span>
+        <div id="rankOptions">
+          <div class="rank-option-row" data-code="prep">
+            <label>As preparation before a shift or call type (to review treatment; deeper clinical knowledge sought elsewhere)</label>
+            <select class="form-control rank-select rank-dd" data-code="prep" onchange="validateRanks()">
+              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+            </select>
+          </div>
+          <div class="rank-option-row" data-code="reference">
+            <label>As a quick reference during or after a call (to confirm dosing, criteria, or specific steps)</label>
+            <select class="form-control rank-select rank-dd" data-code="reference" onchange="validateRanks()">
+              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+            </select>
+          </div>
+          <div class="rank-option-row" data-code="checklist">
+            <label>As a checklist during patient care (to ensure all required steps are completed)</label>
+            <select class="form-control rank-select rank-dd" data-code="checklist" onchange="validateRanks()">
+              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+            </select>
+          </div>
+          <div class="rank-option-row" data-code="scope">
+            <label>As a scope of practice reference (to confirm what you are authorized to do)</label>
+            <select class="form-control rank-select rank-dd" data-code="scope" onchange="validateRanks()">
+              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+            </select>
+          </div>
+          <div class="rank-option-row" data-code="learning">
+            <label>As a comprehensive learning or teaching document (primary source of clinical knowledge, like a textbook)</label>
+            <select class="form-control rank-select rank-dd" data-code="learning" onchange="validateRanks()">
+              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+            </select>
+          </div>
+          <div class="rank-option-row" data-code="documentation">
+            <label>As a documentation reference (to support or justify PCR documentation)</label>
+            <select class="form-control rank-select rank-dd" data-code="documentation" onchange="validateRanks()">
+              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+            </select>
+          </div>
+          <div class="rank-option-row" data-code="precepting">
+            <label>As a teaching tool when training or precepting others</label>
+            <select class="form-control rank-select rank-dd" data-code="precepting" onchange="validateRanks()">
+              <option value="">—</option><option>1st</option><option>2nd</option><option>3rd</option>
+            </select>
+          </div>
+        </div>
+        <div id="rankError" style="display:none;color:var(--red);font-size:12px;margin-top:8px;">Each rank (1st, 2nd, 3rd) can only be selected once.</div>
+      </div>
+
+      <!-- Q9 -->
+      <div class="form-group">
+        <span class="q-number">Q9</span>
+        <label class="form-label">How often do you reference your agency's protocols or guidelines?</label>
+        <select class="form-control" id="q_protocol_frequency">
+          <option value="">Select…</option>
+          <option>Daily or almost daily</option>
+          <option>Weekly</option>
+          <option>Monthly</option>
+          <option>A few times per year</option>
+          <option>Rarely or never</option>
+        </select>
+      </div>
+
+      <!-- Q10 -->
+      <div class="form-group">
+        <span class="q-number">Q10</span>
+        <label class="form-label">Is there anything about how you use your protocols or guidelines that isn't captured above?</label>
+        <span class="form-sublabel">Optional — open text</span>
+        <textarea class="form-control" id="q_use_other" placeholder="Optional comments…"></textarea>
+      </div>
+
+      <div id="demoError" style="display:none;color:var(--red);font-size:13px;margin-bottom:16px;padding:10px 14px;background:rgba(239,68,68,.08);border-radius:8px;border:1px solid rgba(239,68,68,.2);">Please complete all required questions (Q1–Q9) before continuing.</div>
+
+      <button class="btn btn-primary btn-lg btn-full" onclick="startComparisons()">Begin Comparisons →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: COMPARISON ══════════ -->
+<div class="screen" id="screenCompare">
+  <div class="container-wide">
+    <div class="compare-instruction">
+      <strong>Which format do you prefer?</strong> Review both protocols below — tap any image to enlarge. Then click <em>Choose This Format</em> under your preferred option.
+    </div>
+
+    <div class="comparison-grid" id="comparisonGrid">
+      <!-- LEFT -->
+      <div>
+        <div class="protocol-panel" id="panelLeft">
+          <div class="panel-label">
+            <div class="panel-label-left">
+              <div class="proto-letter" id="letterLeft">A</div>
+              <span id="nameLeft" style="font-size:13px;"></span>
+            </div>
+            <span class="selected-badge">✓ Chosen</span>
+          </div>
+          <div class="panel-viewer" id="viewerLeft"></div>
+          <button class="choose-btn" id="chooseLeft" onclick="selectProtocol('left')">← Choose This Format</button>
+        </div>
+      </div>
+
+      <!-- VS (desktop) -->
+      <div class="vs-divider"><div class="vs-circle">VS</div></div>
+
+      <!-- RIGHT -->
+      <div>
+        <!-- Mobile VS -->
+        <div class="mobile-vs"><div class="mobile-vs-inner">VS</div></div>
+        <div class="protocol-panel" id="panelRight">
+          <div class="panel-label">
+            <div class="panel-label-left">
+              <div class="proto-letter" id="letterRight">B</div>
+              <span id="nameRight" style="font-size:13px;"></span>
+            </div>
+            <span class="selected-badge">✓ Chosen</span>
+          </div>
+          <div class="panel-viewer" id="viewerRight"></div>
+          <button class="choose-btn" id="chooseRight" onclick="selectProtocol('right')">Choose This Format →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comment -->
+    <div class="comment-section">
+      <label>💬 Optional: What influenced your choice for this comparison?</label>
+      <textarea class="form-control" id="pairComment" placeholder="Format, layout, readability, usability…" style="min-height:60px;"></textarea>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="btnBack" onclick="prevPair()">← Back</button>
+      <button class="btn btn-primary" id="btnNext" onclick="nextPair()" disabled>Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: CLOSING COMMENTS ══════════ -->
+<div class="screen" id="screenClosing">
+  <div class="container">
+    <div class="card">
+      <h2 style="font-size:20px;font-weight:500;margin-bottom:6px;">Almost Done</h2>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:24px;">You have completed all 15 comparisons.</p>
+      <div class="form-group">
+        <label class="form-label">Based on the protocols presented, do you have any additional information to add?</label>
+        <span class="form-sublabel">Optional — open text</span>
+        <textarea class="form-control" id="closing_comments" placeholder="Any additional thoughts on the formats you reviewed…" style="min-height:120px;"></textarea>
+      </div>
+      <button class="btn btn-primary btn-lg btn-full" onclick="submitSurvey()">Submit Survey →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SCREEN: THANK YOU ══════════ -->
+<div class="screen" id="screenThanks">
+  <div class="container">
+    <div class="card thankyou-card">
+      <div class="thankyou-icon">✅</div>
+      <h2>Thank you for<br><strong>completing the survey</strong></h2>
+      <p>Your responses have been recorded. This research will help improve EMS protocol design for providers across the region.</p>
+      <div class="submit-status sending" id="submitStatus">
+        <div class="spinner" style="width:16px;height:16px;border-width:2px;margin-right:8px;"></div>
+        <span>Submitting your responses…</span>
+      </div>
+      <div class="ranking-toggle">
+        <button class="btn btn-secondary" onclick="toggleRanking()" id="rankingToggleBtn">📊 View My Personal Rankings</button>
+        <div id="rankingReveal" style="display:none;">
+          <p style="font-size:13px;color:var(--muted);margin-top:14px;margin-bottom:4px;">Based on your choices — most preferred format first.</p>
+          <div class="ranking-list" id="rankingList"></div>
+          <p style="font-size:11px;color:var(--muted);margin-top:14px;text-align:center;">These are your personal results. Group rankings will be calculated by the researcher across all respondents.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ════════════════════════════════════════════
+// APPS SCRIPT URL
+// ════════════════════════════════════════════
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzpO8tj1w9a6yXcy1vgcnFhnA2g_01rm-w_YugJYbQ9vIDtuhKuxUZIrFKZqeKqM_gc9g/exec';
+
+// ════════════════════════════════════════════
+// PROTOCOL DEFINITIONS
+// Images are in the repo root
+// ════════════════════════════════════════════
+const PROTOCOLS={
+  'format-01_linear-algorithm':{
+    label:'Linear Algorithm',
+    pages:['/format-01_linear-algorithm_p01.png']
+  },
+  'format-02_column-algorithm':{
+    label:'Column Algorithm',
+    pages:['/format-02_column-algorithm_p01.png','/format-02_column-algorithm_p02.png']
+  },
+  'format-03_narrative-outline':{
+    label:'Narrative Outline',
+    pages:['/format-03_narrative-outline_p01.png','/format-03_narrative-outline_p02.png']
+  },
+  'format-04_structured-outline':{
+    label:'Structured Outline',
+    pages:['/format-04_structured-outline_p01.png','/format-04_structured-outline_p02.png']
+  },
+  'format-05_narrative-reference':{
+    label:'Narrative Reference',
+    pages:['/format-05_narrative-reference_p01.png','/format-05_narrative-reference_p02.png','/format-05_narrative-reference_p03.png','/format-05_narrative-reference_p04.png','/format-05_narrative-reference_p05.png']
+  },
+  'format-06_colorcoded-sidebar':{
+    label:'Color-Coded Sidebar',
+    pages:['/format-06_colorcoded-sidebar_p01.png','/format-06_colorcoded-sidebar_p02.png','/format-06_colorcoded-sidebar_p03.png','/format-06_colorcoded-sidebar_p04.png']
+  }
+};
+
+// ════════════════════════════════════════════
+// HARDCODED PAIRS (format-0X keys)
+// Left/right position randomized per respondent
+// ════════════════════════════════════════════
+const HARDCODED_PAIRS=[
+  ['format-01_linear-algorithm','format-02_column-algorithm'],
+  ['format-01_linear-algorithm','format-03_narrative-outline'],
+  ['format-01_linear-algorithm','format-04_structured-outline'],
+  ['format-01_linear-algorithm','format-05_narrative-reference'],
+  ['format-01_linear-algorithm','format-06_colorcoded-sidebar'],
+  ['format-02_column-algorithm','format-03_narrative-outline'],
+  ['format-02_column-algorithm','format-04_structured-outline'],
+  ['format-02_column-algorithm','format-05_narrative-reference'],
+  ['format-02_column-algorithm','format-06_colorcoded-sidebar'],
+  ['format-03_narrative-outline','format-04_structured-outline'],
+  ['format-03_narrative-outline','format-05_narrative-reference'],
+  ['format-03_narrative-outline','format-06_colorcoded-sidebar'],
+  ['format-04_structured-outline','format-05_narrative-reference'],
+  ['format-04_structured-outline','format-06_colorcoded-sidebar'],
+  ['format-05_narrative-reference','format-06_colorcoded-sidebar']
+];
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+let pairs=[];         // [{left:key, right:key, chosen:null, comment:''}]
+let currentIdx=0;
+let demographics={};
+let respondentId='';
+let rankingVisible=false;
+let lightboxZoom=1;
+
+// ════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ════════════════════════════════════════════
+// RANK VALIDATION (Q8)
+// ════════════════════════════════════════════
+function validateRanks(){
+  const dds=document.querySelectorAll('.rank-dd');
+  const chosen=[];
+  let valid=true;
+  dds.forEach(dd=>{if(dd.value)chosen.push(dd.value);});
+  const unique=new Set(chosen);
+  if(chosen.length!==unique.size){
+    document.getElementById('rankError').style.display='block';
+    valid=false;
+  }else{
+    document.getElementById('rankError').style.display='none';
+  }
+  return valid;
+}
+
+function getRankData(){
+  const map={};
+  document.querySelectorAll('.rank-dd').forEach(dd=>{
+    if(dd.value) map[dd.dataset.code]=dd.value;
+  });
+  const r1=Object.keys(map).find(k=>map[k]==='1st')||'';
+  const r2=Object.keys(map).find(k=>map[k]==='2nd')||'';
+  const r3=Object.keys(map).find(k=>map[k]==='3rd')||'';
+  return{use_rank1:r1,use_rank2:r2,use_rank3:r3};
+}
+
+// ════════════════════════════════════════════
+// DEMOGRAPHICS → START
+// ════════════════════════════════════════════
+function startComparisons(){
+  const required=['q_exp_years','q_cert_level','q_primary_role','q_agency_type','q_response_type','q_pay_status','q_call_volume','q_protocol_frequency'];
+  const missing=required.some(id=>!document.getElementById(id).value);
+  if(missing){document.getElementById('demoError').style.display='block';return;}
+  if(!validateRanks()){return;}
+  document.getElementById('demoError').style.display='none';
+
+  const rankData=getRankData();
+  demographics={
+    exp_years:document.getElementById('q_exp_years').value,
+    cert_level:document.getElementById('q_cert_level').value,
+    primary_role:document.getElementById('q_primary_role').value,
+    agency_type:document.getElementById('q_agency_type').value,
+    response_type:document.getElementById('q_response_type').value,
+    pay_status:document.getElementById('q_pay_status').value,
+    call_volume:document.getElementById('q_call_volume').value,
+    use_rank1:rankData.use_rank1,
+    use_rank2:rankData.use_rank2,
+    use_rank3:rankData.use_rank3,
+    protocol_frequency:document.getElementById('q_protocol_frequency').value,
+    use_other:document.getElementById('q_use_other').value||''
+  };
+
+  respondentId='R'+Date.now().toString(36).toUpperCase();
+
+  // Build pairs with randomized left/right
+  pairs=HARDCODED_PAIRS.map(([a,b])=>{
+    const flip=Math.random()<0.5;
+    return{left:flip?b:a,right:flip?a:b,chosen:null,comment:''};
+  });
+
+  currentIdx=0;
+  showScreen('screenCompare');
+  document.getElementById('progressHeader').style.display='flex';
+  renderPair(0);
+}
+
+// ════════════════════════════════════════════
+// RENDER PAIR
+// ════════════════════════════════════════════
+function renderPair(idx){
+  const pair=pairs[idx];
+  const lp=PROTOCOLS[pair.left];
+  const rp=PROTOCOLS[pair.right];
+  const total=pairs.length;
+
+  document.getElementById('progressFill').style.width=((idx/total)*100)+'%';
+  document.getElementById('pairCounter').textContent=`${idx+1} / ${total}`;
+
+  document.getElementById('nameLeft').textContent=lp.label;
+  document.getElementById('nameRight').textContent=rp.label;
+  document.getElementById('letterLeft').textContent=String.fromCharCode(65+Object.keys(PROTOCOLS).indexOf(pair.left));
+  document.getElementById('letterRight').textContent=String.fromCharCode(65+Object.keys(PROTOCOLS).indexOf(pair.right));
+
+  updateSelectionUI(pair.chosen);
+  document.getElementById('pairComment').value=pair.comment||'';
+  document.getElementById('btnBack').style.visibility=idx>0?'visible':'hidden';
+  document.getElementById('btnNext').disabled=pair.chosen===null;
+  document.getElementById('btnNext').textContent=idx===total-1?'Continue →':'Next →';
+
+  renderImages('viewerLeft',lp.pages);
+  renderImages('viewerRight',rp.pages);
+}
+
+function renderImages(viewerId,pages){
+  const viewer=document.getElementById(viewerId);
+  viewer.innerHTML='';
+  pages.forEach((src,i)=>{
+    const img=document.createElement('img');
+    img.src=src;
+    img.alt=`Protocol page ${i+1}`;
+    img.onclick=()=>openLightbox(src);
+    img.title='Click to enlarge';
+    viewer.appendChild(img);
+    if(pages.length>1){
+      const ind=document.createElement('div');
+      ind.className='page-indicator';
+      ind.textContent=`Page ${i+1} of ${pages.length}`;
+      viewer.appendChild(ind);
+    }
+  });
+}
+
+function selectProtocol(side){
+  pairs[currentIdx].chosen=side;
+  updateSelectionUI(side);
+  document.getElementById('btnNext').disabled=false;
+}
+
+function updateSelectionUI(chosen){
+  document.getElementById('panelLeft').classList.toggle('selected',chosen==='left');
+  document.getElementById('panelRight').classList.toggle('selected',chosen==='right');
+  document.getElementById('chooseLeft').classList.toggle('chosen',chosen==='left');
+  document.getElementById('chooseRight').classList.toggle('chosen',chosen==='right');
+}
+
+function nextPair(){
+  pairs[currentIdx].comment=document.getElementById('pairComment').value;
+  if(currentIdx>=pairs.length-1){
+    document.getElementById('progressFill').style.width='100%';
+    showScreen('screenClosing');
+  }else{
+    currentIdx++;
+    renderPair(currentIdx);
+    window.scrollTo(0,0);
+  }
+}
+
+function prevPair(){
+  pairs[currentIdx].comment=document.getElementById('pairComment').value;
+  if(currentIdx>0){currentIdx--;renderPair(currentIdx);window.scrollTo(0,0);}
+}
+
+// ════════════════════════════════════════════
+// LIGHTBOX / ZOOM
+// ════════════════════════════════════════════
+function openLightbox(src){
+  lightboxZoom=1;
+  document.getElementById('lightboxImg').src=src;
+  document.getElementById('lightboxImg').style.transform='scale(1)';
+  document.getElementById('lightbox').classList.add('active');
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(e){
+  if(e&&e.target!==document.getElementById('lightbox')&&!e.target.classList.contains('lightbox-close'))return;
+  document.getElementById('lightbox').classList.remove('active');
+  document.body.style.overflow='';
+}
+function adjustZoom(delta){
+  lightboxZoom=Math.min(4,Math.max(0.5,lightboxZoom+delta));
+  document.getElementById('lightboxImg').style.transform=`scale(${lightboxZoom})`;
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeLightbox({target:document.getElementById('lightbox')});
+  if(e.key==='+'||e.key==='=')adjustZoom(0.25);
+  if(e.key==='-')adjustZoom(-0.25);
+});
+
+// ════════════════════════════════════════════
+// RANKINGS CALCULATION
+// ════════════════════════════════════════════
+function calculateRankings(){
+  const wins={};
+  Object.keys(PROTOCOLS).forEach(k=>wins[k]=0);
+  pairs.forEach(p=>{
+    if(p.chosen==='left')wins[p.left]++;
+    else if(p.chosen==='right')wins[p.right]++;
+  });
+  const max=Math.max(...Object.values(wins),1);
+  return Object.keys(PROTOCOLS)
+    .map(k=>({key:k,label:PROTOCOLS[k].label,wins:wins[k],pct:(wins[k]/max)*100}))
+    .sort((a,b)=>b.wins-a.wins);
+}
+
+// ════════════════════════════════════════════
+// SUBMIT
+// ════════════════════════════════════════════
+function submitSurvey(){
+  showScreen('screenThanks');
+  document.getElementById('progressHeader').style.display='none';
+
+  const rankings=calculateRankings();
+  buildRankingDisplay(rankings);
+
+  // Device detection
+  const w=window.innerWidth;
+  const deviceType=w<768?'mobile':w<1024?'tablet':'desktop';
+
+  // Pair data
+  const pairData=pairs.map((p,i)=>({
+    pairNumber:i+1,
+    formatA:PROTOCOLS[p.left].label,
+    formatB:PROTOCOLS[p.right].label,
+    formatA_key:p.left,
+    formatB_key:p.right,
+    chosen:p.chosen==='left'?PROTOCOLS[p.left].label:p.chosen==='right'?PROTOCOLS[p.right].label:'No choice',
+    chosen_key:p.chosen==='left'?p.left:p.chosen==='right'?p.right:'',
+    comment:p.comment||''
+  }));
+
+  // Final ranks
+  const finalRanks={};
+  rankings.forEach((r,i)=>{finalRanks['rank_'+r.label.replace(/[^a-zA-Z0-9]/g,'_')]=i+1;});
+
+  const payload={
+    respondentId,
+    timestamp:new Date().toISOString(),
+    deviceType,
+    screenWidth:window.innerWidth,
+    ...demographics,
+    closing_comments:document.getElementById('closing_comments').value||'',
+    totalPairs:pairs.length,
+    pairs:JSON.stringify(pairData),
+    ...finalRanks
+  };
+
+  fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+    .then(()=>setSubmitStatus('success','✓ Responses recorded successfully. Thank you!'))
+    .catch(e=>setSubmitStatus('error','⚠ Submission error — please notify the researcher. ('+e.message+')'));
+}
+
+function setSubmitStatus(type,msg){
+  const el=document.getElementById('submitStatus');
+  el.className='submit-status '+type;
+  el.innerHTML=type==='sending'?`<div class="spinner" style="width:16px;height:16px;border-width:2px;margin-right:8px;"></div><span>${msg}</span>`:`<span>${msg}</span>`;
+}
+
+function buildRankingDisplay(rankings){
+  const maxP=Object.keys(PROTOCOLS).length-1;
+  document.getElementById('rankingList').innerHTML=rankings.map((r,rank)=>{
+    const medal=rank===0?'🥇':rank===1?'🥈':rank===2?'🥉':`#${rank+1}`;
+    return`<div class="rank-item" style="animation-delay:${(rank+1)*0.1}s">
+      <div class="rank-number">${medal}</div>
+      <div class="rank-info">
+        <div class="rank-name">${r.label}</div>
+        <div class="rank-score">${r.wins} win${r.wins!==1?'s':''} of ${maxP} comparisons</div>
+      </div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${r.pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleRanking(){
+  rankingVisible=!rankingVisible;
+  document.getElementById('rankingReveal').style.display=rankingVisible?'block':'none';
+  document.getElementById('rankingToggleBtn').textContent=rankingVisible?'▲ Hide My Rankings':'📊 View My Personal Rankings';
+}
+</script>
+</body>
+</html>
